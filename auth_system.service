@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn instance to serve Auth System
+After=network.target postgresql.service
+
+[Service]
+User=cubinez85
+Group=www-data
+WorkingDirectory=/var/www/auth_system
+Environment="PATH=/var/www/auth_system/venv/bin"
+EnvironmentFile=/var/www/auth_system/.env
+ExecStart=/var/www/auth_system/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 wsgi:app
+
+[Install]
+WantedBy=multi-user.target
