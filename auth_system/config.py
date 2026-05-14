@@ -40,6 +40,33 @@ class Config:
     LOG_LEVEL = 'INFO'
     LOG_FILE = 'logs/app.log'
 
+    # === Email Settings ===
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'localhost')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', 25))
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'false').lower() in ('true', '1', 'yes')
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL', 'false').lower() in ('true', '1', 'yes')
+
+    # Аутентификация SMTP (опционально — для вашего сервера может не требоваться)
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')  # Например: cubinez85@cubinez.ru
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')  # Пароль или пусто если не требуется
+
+    # Отправитель и получатель по умолчанию
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@cubinez.ru')
+    MAIL_RECIPIENT = os.environ.get('MAIL_RECIPIENT')  # Опционально: для тестов все письма сюда
+
+    # Email verification settings
+    EMAIL_VERIFICATION_EXPIRES_HOURS = int(os.environ.get('EMAIL_VERIFICATION_EXPIRES_HOURS', 24))
+    EMAIL_VERIFICATION_MIN_INTERVAL_MINUTES = int(os.environ.get('EMAIL_VERIFICATION_MIN_INTERVAL_MINUTES', 5))
+
+    # Base URL для генерации ссылок
+    BASE_URL = os.environ.get('BASE_URL', 'https://auth.cubinez.ru')
+
+    # Логирование писем вместо отправки (для разработки/тестов)
+    MAIL_LOG_ONLY = os.environ.get('MAIL_LOG_ONLY', 'false').lower() in ('true', '1', 'yes')
+
+    # === Password Reset Settings ===
+    PASSWORD_RESET_EXPIRES_HOURS = int(os.environ.get('PASSWORD_RESET_EXPIRES_HOURS', 1))
+    PASSWORD_RESET_MIN_INTERVAL_MINUTES = int(os.environ.get('PASSWORD_RESET_MIN_INTERVAL_MINUTES', 15))
 
 class DevelopmentConfig(Config):
     DEBUG = True
