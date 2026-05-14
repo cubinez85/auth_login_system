@@ -20,7 +20,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Пути
-PROJECT_ROOT="/var/www/auth_system"
+PROJECT_ROOT="/home/cubinez85/auth_login_system/auth_system"
 VENV_PATH="${PROJECT_ROOT}/venv"
 TESTS_DIR="${PROJECT_ROOT}/tests"
 COVERAGE_DIR="${PROJECT_ROOT}/htmlcov"
