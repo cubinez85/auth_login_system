@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, redirect
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_admin import Admin
@@ -15,11 +15,16 @@ cors = CORS()
 limiter = Limiter(key_func=get_remote_address)
 
 # Flask-Admin setup
+from flask_admin import Admin
 from app.admin.views import MyAdminIndexView
+
+# Создаём экземпляр Admin БЕЗ app (для factory pattern)
 admin = Admin(
     name='Auth System Admin',
     template_mode='bootstrap4',
-    index_view=MyAdminIndexView()
+    index_view=MyAdminIndexView(),
+    url='/admin',  # ← Без завершающего слеша!
+    base_template='admin/master.html'
 )
 
 # Logging setup
@@ -134,10 +139,22 @@ def create_app(config_name='default'):
     def not_found_error(error):
         return {'error': 'Not found', 'message': str(error)}, 404
 
+
     @app.errorhandler(500)
     def internal_error(error):
         db.session.rollback()
-        logger.error(f"Internal server error: {error}")
+        # ✅ Логируем ПОЛНЫЙ трейсбек
+        logger.error(f"Internal server error: {error}", exc_info=True)
+    
+        # ✅ Включаем подробную информацию в ответ (только для отладки!)
+        if app.config.get('DEBUG', False) or app.config.get('PROPAGATE_EXCEPTIONS', False):
+            import traceback
+            return {
+                'error': 'Internal server error',
+                'message': str(error),
+                'traceback': traceback.format_exc()
+            }, 500
+    
         return {'error': 'Internal server error'}, 500
 
     @app.errorhandler(429)
@@ -145,4 +162,57 @@ def create_app(config_name='default'):
         return {'error': 'Rate limit exceeded', 'message': str(e.description)}, 429
 
     logger.info(f"🚀 Application created with config: {config_name}")
+    # =====================================================================
+    # Глобальные редиректы для старых URL Flask-Admin
+    # =====================================================================
+
+    # 1. Редирект создания пользователя (конкретный)
+    @app.route('/admin/user/new/', methods=['GET'])
+    def redirect_user_create():
+        """🔄 Редирект со старого URL создания пользователя"""
+        from flask import redirect
+        return redirect('/admin/user_create/')
+
+    # 2. Общий редирект для других моделей
+    @app.route('/admin/<model>/new/', methods=['GET'])
+    def redirect_admin_create(model):
+        """🔄 Общий редирект для других моделей (возвращает в список)"""
+        from flask import redirect, url_for
+        return redirect(f'/admin/{model}/')
+
+        # =====================================================================
+    # Редиректы со старых URL на новые (обратная совместимость)
+    # =====================================================================
+    
+    @app.route('/admin/user/')
+    def redirect_user_list():
+        return redirect('/admin/user_list/')  # ✅ Прямой путь, без url_for
+    
+    @app.route('/admin/role/')
+    def redirect_role_list():
+        return redirect('/admin/role_list/')
+    
+    @app.route('/admin/resource/')
+    def redirect_resource_list():
+        return redirect('/admin/resource_list/')
+    
+    @app.route('/admin/action/')
+    def redirect_action_list():
+        return redirect('/admin/action_list/')
+    
+    @app.route('/admin/permission/')
+    def redirect_permission_list():
+        return redirect('/admin/permission_list/')
+    
+    @app.route('/admin/userrole/')
+    def redirect_userrole_list():
+        return redirect('/admin/userrole_list/')
+    
+    @app.route('/admin/rolepermission/')
+    def redirect_rolepermission_list():
+        return redirect('/admin/rolepermission_list/')
+    
+    @app.route('/admin/userpermission/')
+    def redirect_userpermission_list():
+        return redirect('/admin/userpermission_list/')
     return app
