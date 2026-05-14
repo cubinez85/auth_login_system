@@ -1,4 +1,34 @@
-production-ready backend-приложение на Flask с собственной реализацией системы аутентификации и авторизации, не полагается полностью на встроенные механизмы фреймворков. Система включает гибкое разграничение доступа на основе ролей (RBAC), JWT-токены с механизмом отзыва, Flask-Admin панель для управления и полноценное API.
+production-ready backend-приложение на Flask с собственной реализацией системы аутентификации и авторизации,
+не полагается полностью на встроенные механизмы фреймворков. 
+Система включает гибкое разграничение доступа на основе ролей (RBAC), 
+JWT-токены с механизмом отзыва, Flask-Admin панель для управления и полноценное API.
+
+📧 Email Verification
+Система подтверждения email при регистрации обеспечивает безопасность и валидацию учётных записей пользователей.
+
+🔐 Как это работает
+1. Регистрация → пользователь создаётся со статусом is_verified=False
+2. Генерация токена → криптографически стойкий токен (24 часа)
+3. Отправка письма → ссылка /api/auth/verify-email/{token}
+4. Подтверждение → пользователь кликает ссылку → is_verified=True, is_active=True
+5. Вход → только после верификации выдаются JWT-токены
+
+# Тест на открытый релей 
+telnet 95.174.94.246 25
+
+EHLO test.cubinez.ru
+
+MAIL FROM:<cubinez85@cubinez.ru>
+
+RCPT TO:<cubinez85@gmail.com>
+
+
+#Важно!!!
+если проект развернут на wsl:
+ip динамический - следить за изменением ip (check_ip.bat on Decktop)
+при изменении ip - на почтовом сервере в /etc/postfix/main.cf in mynetworks = 127.0.0.0/8, 213.87.162.194<= заменить
+если проект развернут на Cloud.ru с белым ip - в /etc/postfix/main.cf in mynetworks внести белый ip
+
 🏗️ Технологический стек
 Компонент
 Технология
@@ -24,49 +54,6 @@ Flask-CORS
 Gunicorn + Nginx
 Документация
 OpenAPI/Swagger (опционально: Flask-RESTX)
-📁 Структура проекта
-/var/www/auth_system/
-├── app/
-│   ├── __init__.py              # Фабрика приложения, инициализация расширений
-│   ├── api/
-│   │   ├── __init__.py
-│   │   ├── auth.py              # Регистрация, вход, logout, refresh, профиль
-│   │   ├── mock_resources.py    # Mock-эндпоинты с проверкой прав (projects, documents, reports)
-│   │   ├── profile.py           # Управление профилем пользователя
-│   │   ├── admin_api.py         # Административное API для управления правами
-│   │   └── main_routes.py       # Основные маршруты (health check и др.)
-│   ├── models/
-│   │   ├── __init__.py          # Экспорт всех моделей
-│   │   ├── user.py              # User (аутентификация, профиль)
-│   │   ├── permission.py        # RBAC: Resource, Action, Permission, Role, UserRole, RolePermission, UserPermission
-│   │   └── token.py             # TokenBlacklist (отозванные JWT токены)
-│   ├── utils/
-│   │   └── jwt_helper.py        # Генерация, верификация, blacklist JWT токенов
-│   ├── decorators/
-│   │   └── permission.py        # @token_required, @permission_required, @admin_required
-│   ├── admin/
-│   │   ├── __init__.py          # Инициализация Flask-Admin
-│   │   └── views.py             # ModelView + кастомные view (AuthTest, TokenBlacklist)
-│   ├── templates/
-│   │   └── admin/
-│   │       ├── index.html       # Главная страница админки
-│   │       ├── auth_test.html   # Тестирование аутентификации
-│   │       └── token_blacklist.html  # Управление blacklist
-│   ├── static/
-│   └── scripts/
-│       └── seed.py         # Скрипт заполнения демо-данными
-├── config.py                    # Конфигурация (dev, prod, testing)
-├── .env                         # Переменные окружения (SECRET_KEY, DATABASE_URL, JWT_SECRET_KEY)
-├── .env.example                 # Шаблон .env
-├── requirements.txt             # Зависимости Python
-├── run.py                       # Точка входа для разработки
-├── wsgi.py                      # Точка входа для Gunicorn
-├── migrations/                  # Alembic миграции
-├── logs/                        # Логи приложения
-├── tests/                       # pytest тесты
-├── .gitignore
-├── README.md                    # Документация проекта
-└── debug_routes.py              # Утилита для отладки маршрутов
 
 🔐 Система аутентификации
 Эндпоинты
@@ -241,19 +228,20 @@ Public
 # Регистрация
 curl -X POST http://127.0.0.1:8000/api/auth/register/ \
   -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"TestPass123!","confirm_password":"TestPass123!","last_name":"Test","first_name":"User"}'
+  -d '{"email":"test@example.com","password":"TestPass123!","confirm_password":"TestPass123!",
+   "last_name":"Test","first_name":"User"}'
 
 # Вход
-curl -X POST http://127.0.0.1:8000/api/auth/login/ \
+curl -X POST http://127.0.0.1:8084/api/auth/login/ \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"TestPass123!"}'
 
 # Доступ к ресурсу с токеном
-curl -X GET http://127.0.0.1:8000/api/projects/ \
+curl -X GET http://127.0.0.1:8084/api/projects/ \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 
 # Logout (blacklist токена)
-curl -X POST http://127.0.0.1:8000/api/auth/logout/ \
+curl -X POST http://127.0.0.1:8084/api/auth/logout/ \
   -H "Authorization: Bearer <ACCESS_TOKEN>"
 (venv) cubinez85@cubinez:/var/www/auth_system$ cat run_tests.sh
 #!/bin/bash
@@ -435,6 +423,36 @@ case "${1:-}" in
 esac
 
 print_header "Готово!"
+
+# Полезные команды 
+sudo journalctl -u auth_system.service -n 50 --no-pager | grep -A5 "Traceback\|Error\|ImportError"
+
+python -m py_compile app/admin/views.py && echo "✅ Syntax OK"
+
+python -m py_compile app/__init__.py && echo "✅ __init__.py OK"
+
+curl -I http://auth.cubinez.ru/admin/user/new/
+
+sudo journalctl -u auth_system.service -n 100 --no-pager | grep -A10 -B5 "Error\|Traceback\|Exception"
+
+python -c "from app import create_app; app = create_app('production'); print('✅ App OK')"
+
+echo "=== Старые списки (теперь должны быть 302) ==="
+for endpoint in user role resource action permission; do
+    echo -n "/admin/$endpoint/ → "
+    curl -s -o /dev/null -w "%{http_code} (Location: %{redirect_url})\n" http://auth.cubinez.ru/admin/$endpoint/
+done
+
+echo -e "\n=== Новые списки (должны быть 200) ==="
+for endpoint in user_list role_list resource_list action_list permission_list; do
+    echo -n "/admin/$endpoint/ → "
+    curl -s -o /dev/null -w "%{http_code}\n" http://auth.cubinez.ru/admin/$endpoint/
+done
+
+# Инициализация базы данных
+flask db init
+flask db migrate -m "Initial migration"
+flask db upgrade
 
 🔧 Дальнейшее развитие
 Swagger/OpenAPI — авто-документация API (Flask-RESTX)
