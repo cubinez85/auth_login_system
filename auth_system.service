@@ -5,10 +5,10 @@ After=network.target postgresql.service
 [Service]
 User=cubinez85
 Group=www-data
-WorkingDirectory=/var/www/auth_system
-Environment="PATH=/var/www/auth_system/venv/bin"
-EnvironmentFile=/var/www/auth_system/.env
-ExecStart=/var/www/auth_system/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 wsgi:app
+WorkingDirectory=/home/cubinez85/auth_login_system/auth_system
+Environment="PATH=/home/cubinez85/auth_login_system/auth_system/venv/bin"
+EnvironmentFile=/home/cubinez85/auth_login_system/auth_system/.env
+ExecStart=/home/cubinez85/auth_login_system/auth_system/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8084 wsgi:app
 
 [Install]
 WantedBy=multi-user.target
